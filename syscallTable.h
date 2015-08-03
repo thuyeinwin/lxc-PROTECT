@@ -281,6 +281,9 @@ void set_addr_ro(unsigned long addr)
 void interceptSysKill()
 {
 
+
+ /* The system call address will differ depending on the host Linux installed */ 
+
   sys_call_table = (void *) 0xffffffff81801360; //simple_strtoul("0xc15b6020", NULL, 16);
 
   if(!sys_call_table)
