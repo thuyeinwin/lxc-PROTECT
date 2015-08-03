@@ -282,7 +282,7 @@ void interceptSysKill()
 {
 
 
- /* The system call address will differ depending on the host Linux installed */ 
+ /* The system call address will differ depending on the host Linux installed. Address contained in System.map */ 
 
   sys_call_table = (void *) 0xffffffff81801360; //simple_strtoul("0xc15b6020", NULL, 16);
 
