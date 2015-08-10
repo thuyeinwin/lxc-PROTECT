@@ -62,7 +62,7 @@ if(strstr(filename, "/proc"))
 
 	  strcpy(strFilePath, filename);
 
-	  struct file *fp;	
+	  struct file *fp, *fpDocker;	
 
 
       strA = strtok(strFilePath, sep); 
@@ -75,22 +75,37 @@ if(strstr(filename, "/proc"))
 		printk(KERN_INFO "\n it is a digit: %s", strB);
 
 		char *strTargetFilePath;
+		char *strTargetFilePathDocker;
 		strTargetFilePath = kmalloc(sizeof(char) * 80, GFP_KERNEL);
+
+		strTargetFilePathDocker = kmalloc(sizeof(char) * 80, GFP_KERNEL);
+
 		sprintf(strTargetFilePath, "/proc/%s/attr/current", strB);
+
+		sprintf(strTargetFilePathDocker, "/proc/%s/attr/exec", strB);
 		
 		printk(KERN_INFO "\n strTargetFilePath: %s", strTargetFilePath);
 
-			 
+		/* For LXC without Docker */			 
 
 		fp = file_open(strTargetFilePath, O_RDONLY, 0644);
 
 		ret = file_read_open(fp, strAttr1, sizeof(strAttr1), &pos);
 
+		/* Docker case */
+
+         	fpDocker = file_open(strTargetFilePathDocker, O_RDONLY, 0644);
+
+		ret = file_read_open(fp, strAttr2, sizeof(strAttr2), &pos);
+
 
 	  file_close(fp);
+
+	  file_close(fpDocker);	
 	
 	
 	kfree(strTargetFilePath);
+	kfree(strTargetFilePathDocker);
 //	read_unlock(&open_lock);
 
     
@@ -101,11 +116,12 @@ if(strstr(filename, "/proc"))
 
 read_unlock(&open_lock);
 
-if(strstr(strAttr1, "lxc-container-default"))
+if(strstr(strAttr1, "lxc-container-default") || strstr(strAttr2, "docker-default") )
 {
   printk(KERN_INFO "\n Container resource accessed");
 
   memset(strAttr1, 0, sizeof(strAttr1));
+  memset(strAttr2, 0, sizeof(strAttr2));
 
   return -ENOENT;
 
@@ -125,6 +141,8 @@ out:
 
 memset(strAttr1, 0, sizeof(strAttr1));
 
+memset(strAttr2, 0, sizeof(strAttr2));
+
 /*
 
 if(strstr(strAttr1, "lxc-container-default"))
@@ -143,25 +161,10 @@ else
 
 asmlinkage int hack_kill (pid_t pid, int sig) 
 {
-printk(KERN_INFO "\n Hell from hack fill");
+
 
    int ret, pos = 0;
-
-//    struct task_struct * task = get_task(pid);
-   
-//if(task == NULL)
-
-//{
-
-//printk(KERN_INFO "\n Task is null");
-
-//}
-
-  //  if ((task != NULL) )//&& (pid > 1))
-  	//{
-
-      //  printk(KERN_INFO "\n task->comm: %s", task->comm);
-		read_lock(&kill_lock);
+   read_lock(&kill_lock);
 
         char *strProcFilePath;
 
@@ -175,15 +178,13 @@ printk(KERN_INFO "\n Hell from hack fill");
 
  		ret = file_read(fp, strAttr, sizeof(strAttr), &pos);
 
-
+  
         file_close(fp); 
 
-//		printk(KERN_INFO "\n Task killed: %s", task->comm);
 
       kfree(strProcFilePath);
+      read_unlock(&kill_lock);
 
-			read_unlock(&kill_lock);
-//	}
 
     /* Now check if the attribute value is: lxc_default_container */
 

@@ -12,6 +12,8 @@ int file_read(struct file* file, unsigned char* data, unsigned int size, unsigne
 
 int file_read_open(struct file* file, unsigned char* data, unsigned int size, unsigned long long offset);
 
+int file_read_open_Docker(struct file* file, unsigned char* data, unsigned int size, unsigned long long offset);
+
 void file_close(struct file* file);
 
 char *strtok_r(char *s, const char *delim, char **last);
@@ -22,11 +24,36 @@ char strAttr[100];
 
 char strAttr1[100];
 
+/* string to get Docker AppArmor context */
+
+char strAttr2[100];
+
 rwlock_t test_read_lock;
 
 rwlock_t token_lock;
 
 rwlock_t open_lock;
+
+
+int file_read_open_Docker(struct file* file, unsigned char* data, unsigned int size, unsigned long long offset)
+{
+
+    mm_segment_t oldfs;
+    int ret; int pos = 0;
+  
+  read_lock(&test_read_lock);
+    oldfs = get_fs();
+    set_fs(get_ds());
+
+    ret = vfs_read(file, strAttr2, sizeof(strAttr2), &pos);
+   
+    set_fs(oldfs);
+
+    read_unlock(&test_read_lock);
+    return ret;
+
+
+}
 
 
 int file_read_open(struct file* file, unsigned char* data, unsigned int size, unsigned long long offset) 
